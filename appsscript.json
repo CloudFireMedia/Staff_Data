@@ -1,0 +1,12 @@
+{
+  "timeZone": "America/Mexico_City",
+  "dependencies": {
+    "libraries": [{
+      "userSymbol": "PL",
+      "libraryId": "1y9ackD7MdSsUkiGd1Au7DvkAgYRn7vkraabnwv12WvIj9YEK1579k48F",
+      "version": "8",
+      "developmentMode": true
+    }]
+  },
+  "exceptionLogging": "STACKDRIVER"
+}
