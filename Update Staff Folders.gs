@@ -9,10 +9,10 @@
 
 function staffFolders_()
 {
-  var staffFolder = DriveApp.getFolderById(STAFF_FOLDER_ID);
+  var staffFolder = DriveApp.getFolderById(STAFF_FOLDER_ID_);
   var archiveFolder = StaffFolders_find(staffFolder, 'Archive');
   
-  var sheet = SpreadsheetApp.openById(STAFF_DATA_SHEET_ID).getSheetByName(STAFF_DATA_SHEET_NAME);
+  var sheet = SpreadsheetApp.openById(STAFF_DATA_SHEET_ID_).getSheetByName(STAFF_DATA_SHEET_NAME_);
   var lastRow = sheet.getLastRow();
   var va = sheet.getSheetValues(3, 1, lastRow-2, 2); // First and last name 
   var va2 = sheet.getSheetValues(3, 6, lastRow-2, 1); // Status

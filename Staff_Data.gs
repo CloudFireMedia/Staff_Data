@@ -3,8 +3,8 @@
 
 (function() {"use strict"})()
 
-// GasTemplate.gs
-// ==============
+// Staff_Data.gs
+// =============
 //
 // Dev: AndrewRoberts.net
 //
@@ -40,10 +40,12 @@ var EVENT_HANDLERS_ = {
 
   staffFolders:              ['staffFolders()',              'Failed to sort staff folders',          staffFolders_],
   maintainPromotionCalendar: ['maintainPromotionCalendar()', 'Failed to maintain promotion calendar', maintainPromotionCalendar_],
+  onEdit:                    ['onEdit()',                    'Failed to process edit',                onEdit_],
 }
 
-function staffFolders(arg1) {return eventHandler_(EVENT_HANDLERS_.staffFolders, arg1)}
+function staffFolders(arg1)              {return eventHandler_(EVENT_HANDLERS_.staffFolders,              arg1)}
 function maintainPromotionCalendar(arg1) {return eventHandler_(EVENT_HANDLERS_.maintainPromotionCalendar, arg1)}
+function onEdit(arg1)                    {return eventHandler_(EVENT_HANDLERS_.onEdit,                    arg1)} 
 
 // Private Functions
 // =================
@@ -100,6 +102,7 @@ function eventHandler_(config, arg1) {
     }
 
     Assert.handleError(assertConfig) 
+
   }
   
 } // eventHandler_()
@@ -107,3 +110,138 @@ function eventHandler_(config, arg1) {
 // Private event handlers
 // ----------------------
 
+/*
+
+// onChange
+{authMode=FULL, changeType=REMOVE_ROW, source=Spreadsheet, user=andrewr1969@gmail.com, triggerUid=822831230}
+
+// onEdit
+{authMode=FULL, range=Range, oldValue=1.0, source=Spreadsheet, value=2, user=andrewr1969@gmail.com, triggerUid=1616728844}
+
+*/
+
+function onEdit_(event) {
+
+  Log_.fine('event: %s', event) 
+  var runRecreateQuickLook = false;
+  
+  if (event.hasOwnProperty('changeType')) {
+    
+    var changeType = event.changeType;
+    Log_.fine('changeType: ' + changeType);
+   
+    if (changeType !== 'EDIT') {
+    
+      // onChange - The event does not tell us where the change was so act on it anyway
+      runRecreateQuickLook = true;
+    }
+ 
+  } else { 
+  
+    // onEdit
+    
+    if (!event.hasOwnProperty('triggerUid')) {
+    
+      // Ignore the simple edit trigger, as the installable is the only one that has auth 
+      return;
+    }
+    
+    var range = event.range;
+    
+    var strValue = event.value;
+    var oldStrValue = event.oldValue;
+    var sh = range.getSheet();
+    var shName = sh.getName();
+  
+    Log_.fine('strValue: ' + strValue)
+    Log_.fine('oldStrValue: ' + oldStrValue)
+    Log_.fine('sheet name: ' + shName)
+    
+    if (shName === STAFF_DATA_SHEET_NAME_ && strValue !== oldStrValue) {
+        
+      if (range.getColumn() === STATUS_COLUMN_NUMBER_ && strValue === 'No longer employed') {
+      
+        sh.hideRows(range.getRow(), 1);
+      }  
+      
+      runRecreateQuickLook = true;
+    }
+  }
+  
+  if (runRecreateQuickLook) {
+    recreateQuickLook();      
+  }
+  
+  return;
+  
+  // Private Functions
+  // -----------------
+    
+  function recreateQuickLook(id) {
+  
+    var sp;
+  
+    if (typeof id === 'undefined') {
+      sp = SpreadsheetApp.getActive();
+    } else {
+      sp = SpreadsheetApp.openById(id)
+    }
+    
+    var sh = sp.getSheetByName(STAFF_DATA_SHEET_NAME_);
+    var shDst = sp.getSheetByName(QUICK_LOOK_SHEET_NAME_);
+    var shTmpl = sp.getSheetByName(TEMPLATE_SHEET_NAME_);
+    var data = sh.getDataRange().getValues();
+    
+    var arrDest = []
+    var counter = 1;
+    
+    for (var i = 2; i < data.length; i++) {
+    
+      var firstName  = data[i][0];
+      var lastName   = data[i][1];
+      var jobTitle   = data[i][4]
+      var status     = data[i][5];
+      var ucStatus   = '' + status.trim().toUpperCase() // cast as string    
+      var extension  = data[i][6];
+      var cell       = data[i][7];
+      var secondCell = data[i][9];
+      
+      if (firstName != "" && 
+          (ucStatus == "FULL-TIME" || ucStatus == "PART-TIME" || ucStatus == "VOLUNTEER")) {
+          
+        var row = [counter, extension, lastName + ', ' + firstName, jobTitle, cell, secondCell, status];
+        arrDest.push(row);
+        counter++;     
+      }    
+    }
+    
+    shDst.clear();
+    var lr = shDst.getMaxRows();
+    
+    if(lr>1){
+      shDst.deleteRows(2, lr - 1);
+    }
+    
+    var lastTemplateRow = shTmpl.getLastRow()
+    
+    var rng = shTmpl.getRange(1, 1, lastTemplateRow, 9);
+    rng.copyTo(shDst.getRange("A1"));
+    var dates = shDst.getRange("A17").getValue();
+    var timeZone = Session.getScriptTimeZone()
+    dates = ('' + dates).replace('{date_updated_in_MM_/_DD_/_YY}', Utilities.formatDate(new Date(), timeZone, "MM/dd/yy"))
+    shDst.getRange("A17").setValue(dates)
+  
+    if (arrDest.length !== 0) {
+  
+      if (arrDest.length > 1) {
+        shDst.insertRows(4, (arrDest.length - 1));
+      }
+    
+      shDst.getRange(4, 2, arrDest.length, arrDest[0].length).setValues(arrDest);
+    }
+    
+    Log_.info('Updated "Quick Look" tab')
+    
+  } // onEdit_.recreateQuickLook()  
+  
+} // onEdit_()

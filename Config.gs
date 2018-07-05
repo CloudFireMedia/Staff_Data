@@ -40,21 +40,25 @@ var ADMIN_EMAIL_ADDRESS_ = ''
 // Constants/Enums
 // ===============
 
-// var STAFF_FOLDER_ID = '1jGF-Md5vsJHP41FuUZ8XWtcSHKvRn87i'; // Live Staff folder
-var STAFF_FOLDER_ID = '1NySJljnL7vyK6yHWf9LWaHBOikHJaQdR' // Andrew's Projects > Staff_Data > Staff
+// var STAFF_FOLDER_ID_ = '1jGF-Md5vsJHP41FuUZ8XWtcSHKvRn87i'; // Live Staff folder
+var STAFF_FOLDER_ID_ = '1NySJljnL7vyK6yHWf9LWaHBOikHJaQdR' // Andrew's Projects > Staff_Data > Staff
 
-// var STAFF_DATA_SHEET_ID = '1iiFmdqUd-CoWtUjZxVgGcNb74dPVh-l5kuU_G5mmiHI'; // Live CCN Staff Data Sheet
-var STAFF_DATA_SHEET_ID = '1qx_Ok8F1-WOS6CnFvTeLUDtbkGTvFBDBSbsdZl_ANEc'; // Test Copy of CCN Staff Data Sheet (andrewr)
+// var STAFF_DATA_SHEET_ID_ = '1iiFmdqUd-CoWtUjZxVgGcNb74dPVh-l5kuU_G5mmiHI'; // Live CCN Staff Data Sheet
+var STAFF_DATA_SHEET_ID_ = '1qx_Ok8F1-WOS6CnFvTeLUDtbkGTvFBDBSbsdZl_ANEc'; // Test Copy of CCN Staff Data Sheet (andrewr)
 
-var STAFF_DATA_SHEET_NAME = 'Staff';
+var STAFF_DATA_SHEET_NAME_ = 'Staff';
+var QUICK_LOOK_SHEET_NAME_  = 'Quick Look';
+var TEMPLATE_SHEET_NAME_    = 'Sheet Name';
 
-// var CCN_EVENTS_PROMOTION_CALENDAR_ID = '1d0-hBf96ilIpAO67LR86leEq09jYP2866uWC48bJloc'; // Live CCN Events Promotion Calendar
-var CCN_EVENTS_PROMOTION_CALENDAR_ID = '1Q3M3HOqrWeKchmlIYfz-f5T2GyFSvxveV_1xnoVf73U'; // Test Copy of  CCN Events Promotion Calendar (andrewr)
+var STATUS_COLUMN_NUMBER_ = 6;
 
-// var EVENT_TEMPLATE_ID = '1Idf44phe12hFr6TRk-h8qDFTnu_BanOP0H0swnLAARw'; // Live TEMPLATE CCN Events Promotion Calendar (DELETED - 29June2018)
-var EVENT_TEMPLATE_ID = '1JgTf-2bD7LmAKmq8aczwlFxPPpNzLUKIUZA9ccK6dic'; // Test Copy of TEMPLATE CCN Events Promotion Calendar (andrewr)
+// var CCN_EVENTS_PROMOTION_CALENDAR_ID_ = '1d0-hBf96ilIpAO67LR86leEq09jYP2866uWC48bJloc'; // Live CCN Events Promotion Calendar
+var CCN_EVENTS_PROMOTION_CALENDAR_ID_ = '1Q3M3HOqrWeKchmlIYfz-f5T2GyFSvxveV_1xnoVf73U'; // Test Copy of  CCN Events Promotion Calendar (andrewr)
 
-var TEMPLATE_SHEET_NAME='TEMPLATE';
+// var EVENT_TEMPLATE_ID_ = '1Idf44phe12hFr6TRk-h8qDFTnu_BanOP0H0swnLAARw'; // Live TEMPLATE CCN Events Promotion Calendar (DELETED - 29June2018)
+var EVENT_TEMPLATE_ID_ = '1JgTf-2bD7LmAKmq8aczwlFxPPpNzLUKIUZA9ccK6dic'; // Test Copy of TEMPLATE CCN Events Promotion Calendar (andrewr)
+
+var TEMPLATE_SHEET_NAME_='TEMPLATE';
 
 // Function Template
 // -----------------
