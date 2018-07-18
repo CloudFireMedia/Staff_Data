@@ -1,28 +1,26 @@
-/* Redevelopment notes: 
- *   
- *   - trigger for 'on edit' does not work reliably (09.015.2017)
- *   - should aphabetize only the sheets named after a team
- *   - should delete all the sheets in the target spreadsheet that are named after a team first BEFORE adding the sheets again
- */
-
 /**
  * Maintain Promotion Calendar
  */
 
-function maintainPromotionCalendar_()
-{
-  var staffDataSheet = SpreadsheetApp
-    .openById(STAFF_DATA_SHEET_ID_)
-    .getSheetByName(STAFF_DATA_SHEET_NAME_)
+function maintainPromotionCalendar_() {
+
+  var staffDataSpreadsheet = SpreadsheetApp.openById(STAFF_DATA_SHEET_ID_);
+
+  var staffDataSheet = staffDataSpreadsheet
+    .getSheetByName(STAFF_DATA_SHEET_NAME_);
     
   var lastRow = staffDataSheet.getLastRow();
   
   var promotionsSpreadsheet = SpreadsheetApp.openById(EVENTS_PROMOTION_CALENDAR_ID_);
   
-  var statuss = staffDataSheet.getSheetValues(3, 6, lastRow-2, 1); // Status
-  var staffTeamNames = staffDataSheet.getSheetValues(3, 12, lastRow-2, 1); // Team
-  var teamLeaders = staffDataSheet.getSheetValues(3, 13, lastRow-2, 1); // Team Leader
+  var jobTitles      = staffDataSheet.getSheetValues(3, 5,  lastRow-2, 1); 
+  var statuss        = staffDataSheet.getSheetValues(3, 6,  lastRow-2, 1); 
+  var emails         = staffDataSheet.getSheetValues(3, 9,  lastRow-2, 1);
+  var staffTeamNames = staffDataSheet.getSheetValues(3, 12, lastRow-2, 1); 
+  var teamLeaders    = staffDataSheet.getSheetValues(3, 13, lastRow-2, 1); 
+  
   var teams = {};
+  var communicationsDirectorEmail = null;
   
   // Create an ES tab
   // ----------------
@@ -30,8 +28,20 @@ function maintainPromotionCalendar_()
   // For each team create a new Event Sponsorship tab if one doesn't exist and
   // it has a team leader
  
-  for (var rowIndex = 0; rowIndex < staffTeamNames.length; rowIndex++)
-  {
+  for (var rowIndex = 0; rowIndex < staffTeamNames.length; rowIndex++) {
+  
+    var nextJobTitle = jobTitles[rowIndex][0];
+    Log_.fine('nextJobTitle: ' + nextJobTitle);
+  
+    if (nextJobTitle === 'Communications Director') {
+    
+      if (communicationsDirectorEmail !== null) {
+        throw new Error('There are two communications directors in the Staff Data sheet');
+      }
+    
+      communicationsDirectorEmail = emails[rowIndex][0];
+    }
+  
     var nextTeamName = staffTeamNames[rowIndex][0];
     
     if (nextTeamName === 'N/A') {
@@ -40,17 +50,16 @@ function maintainPromotionCalendar_()
 
     var nextTeamLeader = teamLeaders[rowIndex][0];
     var nextEmployed = employed(statuss[rowIndex][0]);
-
+    
     if (!teams.hasOwnProperty(nextTeamName)) {
       teams[nextTeamName] = {};
     }
     
     var nextTeam = teams[nextTeamName];
     
-    if (nextTeamLeader === 'Yes' && nextEmployed)
-    {    
-      if (nextTeam.hasOwnProperty('teamLeader') && nextTeam.teamLeader === 'Yes') 
-      {
+    if (nextTeamLeader === 'Yes' && nextEmployed) {
+    
+      if (nextTeam.hasOwnProperty('teamLeader') && nextTeam.teamLeader === 'Yes') {
         throw new Error('There are two team leaders assigned to ' + nextTeamName)
       }
     
@@ -58,8 +67,8 @@ function maintainPromotionCalendar_()
       
       var ds = promotionsSpreadsheet.getSheetByName(nextTeamName);
       
-      if (ds === null)
-      {     
+      if (ds === null) {
+      
         ds = SpreadsheetApp
           .openById(EVENT_TEMPLATE_ID_)
           .getSheetByName(TEMPLATE_SHEET_NAME_)
@@ -79,8 +88,7 @@ function maintainPromotionCalendar_()
       
     } else {
     
-      if (!nextTeam.hasOwnProperty('teamLeader') && !nextTeam.hasOwnProperty('nonTeamLeader')) 
-      {
+      if (!nextTeam.hasOwnProperty('teamLeader') && !nextTeam.hasOwnProperty('nonTeamLeader')) {
         nextTeam.teamLeader = false;
         nextTeam.nonTeamLeader = true;
       }
@@ -103,30 +111,79 @@ function maintainPromotionCalendar_()
     Log_.fine('sheetName: ' + sheetName);
     var deleteTab = false;
   
-    if (!teams.hasOwnProperty(sheetName)) 
-    {
+    if (!teams.hasOwnProperty(sheetName)) {
+    
       // There are no staff member in this team
       deleteTab = true;
-    }
-    else 
-    {       
+      
+    } else {       
+    
       var nextTeam = teams[sheetName];
       
       if (nextTeam.hasOwnProperty('teamLeader')) {
       
-        if (!nextTeam.teamLeader && !nextTeam.nonTeamLeader) {
+        if (!nextTeam.teamLeader) {
         
-          // This tab has no team leader and no members
+          // This tab has no team leader, any members are ignored
           deleteTab = true;
         }
       }    
     }
     
-    if (deleteTab) 
-    {
-      promotionsSpreadsheet.deleteSheet(sheet);
+    Log_.fine('deleteTab: ' + deleteTab);
+    
+    if (deleteTab) {
+
+      sendDeleteNotification();
+
+      if (TEST_DELETE_ES_TAB) {
+        promotionsSpreadsheet.deleteSheet(sheet);
+      } else {
+        Log_.warning('Delete ES tab disabled');
+      }
+      
       Log_.info('Deleted "' + sheetName + '" tab from promotions calendar');                
     }
+    
+    // Private Functions
+    // -----------------
+    
+    /**
+     * Send a notification about the deleted ES tab
+     */
+     
+    function sendDeleteNotification() {
+    
+      Log_.fine('communicationsDirectorEmail: ' + communicationsDirectorEmail);
+    
+      if (communicationsDirectorEmail === null) {
+        throw new Error('There is no Communications Director in the Staff Data sheet');
+      }
+  
+      if (communicationsDirectorEmail === '') {
+        throw new Error('There is no email for the Communications Director in the Staff Data sheet');
+      }
+  
+      var subject = Utilities.formatString(NOTIFICATION_SUBJECT, sheetName);
+      var textBody = '';
+      
+      var template = HtmlService.createTemplateFromFile('Notification_')
+      template.leaderlessTeamName = sheetName;
+      
+      var options = {
+        htmlBody: template.evaluate().getContent(),
+      }
+    
+      MailApp.sendEmail(
+        communicationsDirectorEmail, 
+        subject, 
+        textBody, 
+        options);
+        
+      Log_.info('Sent "ES Tab deleted" notification to ' + communicationsDirectorEmail);
+   
+    } // maintainPromotionCalendar_.sendDeleteNotification()
+      
   })
   
   // Sort the sheets
@@ -150,8 +207,8 @@ function maintainPromotionCalendar_()
     var allSheets = promotionsSpreadsheet.getSheets();
     var sheets = [];
   
-    allSheets.forEach(function(sheet) 
-    {
+    allSheets.forEach(function(sheet) {
+    
       if (ignore(sheet)) {
         return;
       }
@@ -163,14 +220,13 @@ function maintainPromotionCalendar_()
       // Private Functions
       // -----------------
       
-      function ignore(sheet) 
-      {      
+      function ignore(sheet) {
+      
         var ignoreSheet = false;
     
-        SPECIAL_CALENDAR_SHEET_NAMES.forEach(function(specialSheetName) 
-        {    
-          if (sheet.getName() === specialSheetName) 
-          {
+        SPECIAL_CALENDAR_SHEET_NAMES.forEach(function(specialSheetName) {
+        
+          if (sheet.getName() === specialSheetName) {
             ignoreSheet = true;
           }
         })
@@ -183,30 +239,27 @@ function maintainPromotionCalendar_()
     
   } // maintainPromotionCalendar_.getSheets()
 
-  function sortSheets()
-  {
+  function sortSheets() {
+  
     var spreadsheet=SpreadsheetApp.openById(EVENTS_PROMOTION_CALENDAR_ID_);
     var sheeta=spreadsheet.getSheets();
     var sic=0;
     
-    for (var si=2;si<sheeta.length;si++)
-    {
+    for (var si=2;si<sheeta.length;si++) {
       sic=si;
       
       var ss1=sheeta[si].getName();
       
-      for (var si2=si+1;si2<sheeta.length;si2++)
-      {
-        if (sheeta[sic].getName().localeCompare(sheeta[si2].getName())>0)
-        {
+      for (var si2=si+1;si2<sheeta.length;si2++) {
+      
+        if (sheeta[sic].getName().localeCompare(sheeta[si2].getName())>0) {
           var s1s=sheeta[sic].getName();
           var s2s=sheeta[si2].getName();
           sic=si2;
         }
       }
       
-      if (sic!=si)
-      {
+      if (sic!=si) {
         var sin1=sheeta[si].getIndex();
         var sin2=sheeta[sic].getIndex();
         var sis1=sheeta[si].getName();
@@ -222,5 +275,5 @@ function maintainPromotionCalendar_()
     }
     
   } // maintainPromotionCalendar_.sortSheets()
-    
+  
 } // maintainPromotionCalendar_()

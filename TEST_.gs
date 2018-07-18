@@ -1,7 +1,7 @@
 function TEST_init() {
   Log_ = BBLog.getLog({
     level:                BBLog.Level.ALL, 
-    displayFunctionNames: BBLog.DisplayFunctionNames.YES,
+    displayFunctionNames: BBLog.DisplayFunctionNames.NO,
     sheetId:              STAFF_DATA_SHEET_ID_,
   })  
 }
