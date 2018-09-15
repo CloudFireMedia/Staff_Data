@@ -2,13 +2,13 @@ function TEST_init() {
   Log_ = BBLog.getLog({
     level:                BBLog.Level.ALL, 
     displayFunctionNames: BBLog.DisplayFunctionNames.NO,
-    sheetId:              STAFF_DATA_SHEET_ID_,
+    sheetId:              TEST_STAFF_DATA_SHEET_ID_,
   })  
 }
 
 function TEST_misc() {
   var parentFolder = DriveApp.getFolderById('1jGF-Md5vsJHP41FuUZ8XWtcSHKvRn87i');
-  var childFolders = parentFolder.getFoldersByName('Archive');
+  var childFolders = parentFolder.getFoldersByName(' Archive');
   var archiveFolder
   if (childFolders.hasNext()) {
     archiveFolder = childFolders.next()
@@ -25,7 +25,7 @@ function TEST_maintainPromotionCalendar() {
   maintainPromotionCalendar_()
 }
 
-function TEST_transpose() {
+function TEST_staffFolders() {
   TEST_init()
-  transpose_(STAFF_DATA_SHEET_ID_)
+  staffFolders_()
 }

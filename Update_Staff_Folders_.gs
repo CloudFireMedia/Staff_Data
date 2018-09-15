@@ -8,22 +8,33 @@
 function staffFolders_() {
 
   var staffFolderId = Config.get('STAFF_FOLDER_ID');
-  
   var staffFolder = DriveApp.getFolderById(staffFolderId);
   
   if (staffFolder === null) {
     throw new Error('Could not find Staff folder')
   }
-    
-  var archiveFolder = staffFoldersFind(staffFolder, 'Archive');
+
+  var archiveFolder = staffFoldersFind(staffFolder, ARCHIVE_FOLDER_NAME_);
   
   if (archiveFolder === null) {
     throw new Error('Could not find Archive folder in ' + staffFolderId)
   }
   
-  var staffDataSheetId = Config.get('STAFF_DATA_SHEET_ID');
-  var sheet = SpreadsheetApp.openById(staffDataSheetId).getSheetByName(STAFF_DATA_SHEET_NAME_);
+  var staffSpreadsheet = SpreadsheetApp.getActive();
+  
+  if (staffSpreadsheet === null) {
+    var staffDataSheetId = Config.get('STAFF_DATA_SHEET_ID');
+    staffSpreadsheet = SpreadsheetApp.openById(staffDataSheetId);
+  }
+    
+  var sheet = staffSpreadsheet.getSheetByName(STAFF_DATA_SHEET_NAME_);
   var lastRow = sheet.getLastRow();
+  
+  if (lastRow < 3) {
+    Log_.warning('The Staff tab is empty')
+    return
+  }
+  
   var va = sheet.getSheetValues(3, 1, lastRow-2, 2); // First and last name 
   var va2 = sheet.getSheetValues(3, 6, lastRow-2, 1); // Status
   
@@ -58,13 +69,18 @@ function staffFolders_() {
     var status = va2[row][0];
     
     if (status === 'No longer employed') {
+    
       if (inStaffFolder) {
+      
         staffFolder.removeFolder(employeeFolder);
         archiveFolder.addFolder(employeeFolder);
         Log_.info('Archived folder "' + folderName + '"');
       }
+      
     } else {
+    
       if (!inStaffFolder) {
+      
         staffFolder.addFolder(employeeFolder);
         archiveFolder.removeFolder(employeeFolder);
          Log_.info('Move "' + folderName + '" out of Archive folder ');       
@@ -83,11 +99,11 @@ function staffFolders_() {
   
     Log_.fine('parentFolder: ' + parentFolder);
     Log_.fine('folderName: ' + folderName);
-  
+    
     var childFolder = '';
     var foundFolder = '';
     
-    // Look in the top level of the parent
+    // Look in the top level of the parent for this name
     
     var childFolders = parentFolder.getFoldersByName(folderName);
     
@@ -99,30 +115,13 @@ function staffFolders_() {
         throw new Error('There are multiple folders called "' + folderName + '"');
       }
       
-      Log_.fine('Found "' + folderName + '" by its name')
+      Log_.fine('Found "' + folderName + '" by its name');
+      
       return childFolder;
     } 
      
-    // Look for the "Archive" folder and look in there
-     
-    childFolders = parentFolder.getFolders();
-    
-    while (childFolders.hasNext()) {
-    
-      childFolder = childFolders.next();
-      
-      if (childFolder.getName() === 'Archive') {
-      
-        foundFolder = staffFoldersFind(childFolder, folderName);
-        
-        if (foundFolder) {
-          Log_.fine('Found "' + folderName + '" in Archive folder');
-          return foundFolder;
-        }
-      }
-    }
-    
     Log_.fine('Failed to find folder')
+    
     return null;
      
   } // staffFolders_.staffFoldersFind()
