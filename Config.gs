@@ -20,7 +20,7 @@
 // =============
 
 var SCRIPT_NAME = 'Staff_Data';
-var SCRIPT_VERSION = 'v1.1';
+var SCRIPT_VERSION = 'v1.2';
 
 var PRODUCTION_VERSION_ = true;
 
@@ -28,17 +28,19 @@ var PRODUCTION_VERSION_ = true;
 // -----------
 
 var DEBUG_LOG_LEVEL_ = PRODUCTION_VERSION_ ? BBLog.Level.INFO : BBLog.Level.FINER;
-var DEBUG_LOG_DISPLAY_FUNCTION_NAMES_ = PRODUCTION_VERSION_ ? BBLog.DisplayFunctionNames.NO : BBLog.DisplayFunctionNames.NO;
+var DEBUG_LOG_DISPLAY_FUNCTION_NAMES_ = PRODUCTION_VERSION_ ? BBLog.DisplayFunctionNames.NO : BBLog.DisplayFunctionNames.YES;
 
 // Assert library
 // --------------
 
 var SEND_ERROR_EMAIL_ = PRODUCTION_VERSION_ ? true : false;
 var HANDLE_ERROR_ = Assert.HandleError.THROW;
-var ADMIN_EMAIL_ADDRESS_ = '';
+var ADMIN_EMAIL_ADDRESS_ = 'dev@cloudfire.media';
 
 // Test
 // ----
+
+var TEST_STAFF_DATA_SHEET_ID_ = '1IuI-aiiCvzkpMrb_LpNWtilAG_iKePIYlW12ntQe0ng'
 
 var TEST_DELETE_ES_TAB = true;
 var TEST_SEND_EMAILS = true;
@@ -51,6 +53,9 @@ if (PRODUCTION_VERSION_) {
 
 // Constants/Enums
 // ===============
+
+// The archive folder has a space at the beginning
+var ARCHIVE_FOLDER_NAME_ = ' Archive';
 
 var STAFF_DATA_SHEET_NAME_          = 'Staff';
 var QUICK_LOOK_SHEET_NAME_          = 'Quick Look';
