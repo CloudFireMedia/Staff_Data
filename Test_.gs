@@ -6,6 +6,20 @@ function TEST_init() {
   })  
 }
 
+function TEST_misc() {
+  var parentFolder = DriveApp.getFolderById('1jGF-Md5vsJHP41FuUZ8XWtcSHKvRn87i');
+  var childFolders = parentFolder.getFoldersByName('Archive');
+  var archiveFolder
+  if (childFolders.hasNext()) {
+    archiveFolder = childFolders.next()
+    if (childFolders.hasNext()) {
+      throw 'has two'
+    }
+  } else {
+    throw 'no folders'
+  }
+}
+
 function TEST_maintainPromotionCalendar() {
   TEST_init()
   maintainPromotionCalendar_()
