@@ -20,7 +20,7 @@
 // =============
 
 var SCRIPT_NAME = 'Staff_Data';
-var SCRIPT_VERSION = 'v1.2';
+var SCRIPT_VERSION = 'v1.3';
 
 var PRODUCTION_VERSION_ = true;
 
@@ -71,7 +71,8 @@ var SPECIAL_CALENDAR_SHEET_NAMES = [
   'All Teams',
   'Calendar Planning Team',
   'Log',
-  'SAFE_ES_TAB'
+  'SAFE_ES_TAB',
+  'Calendars Blackout Dates'
 ];
 
 var NOTIFICATION_SUBJECT = 'Action required! Event Sponsorship calendar for "%s" has been deleted';

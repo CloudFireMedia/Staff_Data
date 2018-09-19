@@ -11,7 +11,7 @@ function maintainPromotionCalendar_() {
     
   var lastRow = staffDataSheet.getLastRow();
   
-  var eventsPromotionCalendarId = Config.get('EVENTS_PROMOTION_CALENDAR_ID');
+  var eventsPromotionCalendarId = Config.get('PROMOTION_DEADLINES_CALENDAR_ID');
   var promotionsSpreadsheet = SpreadsheetApp.openById(eventsPromotionCalendarId);
   
   var jobTitles      = staffDataSheet.getSheetValues(3, 5,  lastRow-2, 1); 
