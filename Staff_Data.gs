@@ -38,11 +38,13 @@ var EVENT_HANDLERS_ = {
 //                           Name                            onError Message                          Main Functionality
 //                           ----                            ---------------                          ------------------
 
+  initialize:                ['initialize()',                'Failed to initialize',                  initialize_],
   staffFolders:              ['staffFolders()',              'Failed to sort staff folders',          staffFolders_],
   maintainPromotionCalendar: ['maintainPromotionCalendar()', 'Failed to maintain promotion calendar', maintainPromotionCalendar_],
   onEdit:                    ['onEdit()',                    'Failed to process edit',                onEdit_],
 }
 
+function initialize(arg1)                {return eventHandler_(EVENT_HANDLERS_.initialize,                arg1)}
 function staffFolders(arg1)              {return eventHandler_(EVENT_HANDLERS_.staffFolders,              arg1)}
 function maintainPromotionCalendar(arg1) {return eventHandler_(EVENT_HANDLERS_.maintainPromotionCalendar, arg1)}
 function onEdit(arg1)                    {return eventHandler_(EVENT_HANDLERS_.onEdit,                    arg1)} 
@@ -75,6 +77,7 @@ function eventHandler_(config, arg1) {
     Log_ = BBLog.getLog({
       level:                DEBUG_LOG_LEVEL_, 
       displayFunctionNames: DEBUG_LOG_DISPLAY_FUNCTION_NAMES_,
+      sheetId:              Config.get('STAFF_DATA_SHEET_ID')
     })
     
     Log_.info('Handling ' + config[0] + ' from ' + (userEmail || 'unknown email') + ' (' + SCRIPT_NAME + ' ' + SCRIPT_VERSION + ')')
@@ -125,58 +128,47 @@ function onEdit_(event) {
   Log_.functionEntryPoint();
   Log_.fine('event: %s', event);
   var runRecreateQuickLook = false;
-  
-  if (!event.hasOwnProperty('changeType')) {
-    return
+  var sp;
+    
+  if (!event.hasOwnProperty('triggerUid')) {
+    
+    // Ignore the simple edit trigger, as the installable is the only one that has auth 
+    return;
   }
-    
-  var changeType = event.changeType;
-  Log_.fine('changeType: ' + changeType);
   
-  if (changeType !== 'EDIT') {
+  if (!event.hasOwnProperty('range')) {
     
-    // onChange - The event does not tell us where the change was so act on it anyway
+    // We've not been told where the change is so do it anyway
     runRecreateQuickLook = true;
     
-  } else { 
+    Log_.warning('No range property');
+    return
     
-    // onEdit
+  } else {
     
-    if (!event.hasOwnProperty('triggerUid')) {
-      
-      // Ignore the simple edit trigger, as the installable is the only one that has auth 
-      return;
+    var range = event.range;
+    var sh = range.getSheet();
+    var shName = sh.getName();
+    
+    if (shName !== STAFF_DATA_SHEET_NAME_) {
+      return
     }
     
-    if (!event.hasOwnProperty('range')) {
+    sp = sh.getParent();
+    var strValue = event.value;
+    var oldStrValue = event.oldValue;
     
-      // We've not been told where the change is so do it anyway
+    Log_.fine('strValue: ' + strValue)
+    Log_.fine('oldStrValue: ' + oldStrValue)
+    Log_.fine('sheet name: ' + shName)
+    
+    if (strValue !== oldStrValue) {
+      
+      if (range.getColumn() === STATUS_COLUMN_NUMBER_ && strValue === 'No longer employed') {        
+        sh.hideRows(range.getRow(), 1);
+      }  
+      
       runRecreateQuickLook = true;
-      
-    } else {
-    
-      var range = event.range;
-      var sh = range.getSheet();
-      
-      if (sh.getName() !== STAFF_DATA_SHEET_NAME_) {
-        return
-      }
-      
-      var strValue = event.value;
-      var oldStrValue = event.oldValue;
-      
-      Log_.fine('strValue: ' + strValue)
-      Log_.fine('oldStrValue: ' + oldStrValue)
-      Log_.fine('sheet name: ' + shName)
-      
-      if (strValue !== oldStrValue) {
-        
-        if (range.getColumn() === STATUS_COLUMN_NUMBER_ && strValue === 'No longer employed') {        
-          sh.hideRows(range.getRow(), 1);
-        }  
-        
-        runRecreateQuickLook = true;
-      }
     }
   }
   
@@ -191,7 +183,6 @@ function onEdit_(event) {
     
   function recreateQuickLook() {
   
-    var sp = SpreadsheetApp.getActive();
     var sh = sp.getSheetByName(STAFF_DATA_SHEET_NAME_);
     var shDst = sp.getSheetByName(QUICK_LOOK_SHEET_NAME_);
     var shTmpl = sp.getSheetByName(QUICK_LOOK_TEMPLATE_SHEET_NAME_);
@@ -250,3 +241,25 @@ function onEdit_(event) {
   } // onEdit_.recreateQuickLook()  
   
 } // onEdit_()
+
+/**
+ * Initialize the library
+ */
+ 
+function initialize_() {
+
+  Log_.functionEntryPoint()
+  
+  var staffDataSpreadsheetId = Config.get('STAFF_DATA_SHEET_ID')
+  
+  Log_.fine('staffDataSpreadsheetId: ' + staffDataSpreadsheetId)
+  
+  ScriptApp
+    .newTrigger('onInstallableEdit')
+    .forSpreadsheet(staffDataSpreadsheetId)
+    .onEdit()
+    .create();
+
+  Log_.info('Created "onInstallableEdit" onEdit trigger')
+
+} // initialize_() 
