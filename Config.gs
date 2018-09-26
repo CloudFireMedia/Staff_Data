@@ -20,14 +20,14 @@
 // =============
 
 var SCRIPT_NAME = 'Staff_Data';
-var SCRIPT_VERSION = 'v1.3';
+var SCRIPT_VERSION = 'v1.4';
 
 var PRODUCTION_VERSION_ = true;
 
 // Log Library
 // -----------
 
-var DEBUG_LOG_LEVEL_ = PRODUCTION_VERSION_ ? BBLog.Level.INFO : BBLog.Level.FINER;
+var DEBUG_LOG_LEVEL_ = PRODUCTION_VERSION_ ? BBLog.Level.INFO : BBLog.Level.ALL;
 var DEBUG_LOG_DISPLAY_FUNCTION_NAMES_ = PRODUCTION_VERSION_ ? BBLog.DisplayFunctionNames.NO : BBLog.DisplayFunctionNames.YES;
 
 // Assert library
