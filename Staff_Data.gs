@@ -39,12 +39,16 @@ var EVENT_HANDLERS_ = {
 //                           ----                            ---------------                          ------------------
 
   initialize:                ['initialize()',                'Failed to initialize',                  initialize_],
+  initialized:               ['initialized()',               'Failed to get initialized',             initialized_],  
+  clearConfig:               ['clearConfig()',               'Failed to clear config',                clearConfig_],    
   staffFolders:              ['staffFolders()',              'Failed to sort staff folders',          staffFolders_],
   maintainPromotionCalendar: ['maintainPromotionCalendar()', 'Failed to maintain promotion calendar', maintainPromotionCalendar_],
   onEdit:                    ['onEdit()',                    'Failed to process edit',                onEdit_],
 }
 
 function initialize(arg1)                {return eventHandler_(EVENT_HANDLERS_.initialize,                arg1)}
+function initialized(arg1)               {return eventHandler_(EVENT_HANDLERS_.initialized,               arg1)}
+function clearConfig(arg1)               {return eventHandler_(EVENT_HANDLERS_.clearConfig,               arg1)}
 function staffFolders(arg1)              {return eventHandler_(EVENT_HANDLERS_.staffFolders,              arg1)}
 function maintainPromotionCalendar(arg1) {return eventHandler_(EVENT_HANDLERS_.maintainPromotionCalendar, arg1)}
 function onEdit(arg1)                    {return eventHandler_(EVENT_HANDLERS_.onEdit,                    arg1)} 
@@ -72,12 +76,11 @@ function eventHandler_(config, arg1) {
 
   try {
 
-    var userEmail = Session.getActiveUser().getEmail()
-
+    var userEmail = Session.getEffectiveUser().getEmail()
+    
     Log_ = BBLog.getLog({
       level:                DEBUG_LOG_LEVEL_, 
       displayFunctionNames: DEBUG_LOG_DISPLAY_FUNCTION_NAMES_,
-      sheetId:              Config.get('STAFF_DATA_SHEET_ID')
     })
     
     Log_.info('Handling ' + config[0] + ' from ' + (userEmail || 'unknown email') + ' (' + SCRIPT_NAME + ' ' + SCRIPT_VERSION + ')')
@@ -243,6 +246,24 @@ function onEdit_(event) {
 } // onEdit_()
 
 /**
+ * Clear the config
+ */
+
+function clearConfig_() {
+
+  Log_.functionEntryPoint()
+  
+  var properties = PropertiesService.getDocumentProperties()
+  var triggerId = properties.getProperty('triggerId')
+  
+  if (triggerId !== null) {
+    properties.deleteProperty('triggerId')
+    Log_.info('Cleared "onInstallableEdit" onEdit trigger id:' + triggerId)
+  }
+
+} // clearConfig_() 
+
+/**
  * Initialize the library
  */
  
@@ -250,16 +271,42 @@ function initialize_() {
 
   Log_.functionEntryPoint()
   
-  var staffDataSpreadsheetId = Config.get('STAFF_DATA_SHEET_ID')
-  
+  var staffDataSpreadsheetId = Config.get('STAFF_DATA_GSHEET_ID')  
   Log_.fine('staffDataSpreadsheetId: ' + staffDataSpreadsheetId)
   
-  ScriptApp
+  var triggerId = ScriptApp
     .newTrigger('onInstallableEdit')
     .forSpreadsheet(staffDataSpreadsheetId)
     .onEdit()
-    .create();
+    .create()
+    .getUniqueId()
 
-  Log_.info('Created "onInstallableEdit" onEdit trigger')
+  var properties = PropertiesService.getDocumentProperties()
+  
+  if (properties.getProperty('triggerId') !== null) {
+    throw new Error('There is already a trigger ID stored')
+  }
+
+  properties.setProperty('triggerId', triggerId)
+
+  Log_.info('Created "onInstallableEdit" onEdit trigger: ' + triggerId)
+
+} // initialize_()
+
+/**
+ * Check if the library is initialized
+ */
+ 
+function initialized_(e) {
+
+  Log_.functionEntryPoint()
+  
+  var found = false
+  
+  if (PropertiesService.getDocumentProperties().getProperty('triggerId') !== null) {
+    found = true
+  }
+
+  return found
 
 } // initialize_() 
