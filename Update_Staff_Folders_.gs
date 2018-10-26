@@ -20,13 +20,7 @@ function staffFolders_() {
     throw new Error('Could not find Archive folder in ' + staffFolderId)
   }
   
-  var staffSpreadsheet = SpreadsheetApp.getActive();
-  
-  if (staffSpreadsheet === null) {
-    var staffDataSheetId = Config.get('STAFF_DATA_SHEET_ID');
-    staffSpreadsheet = SpreadsheetApp.openById(staffDataSheetId);
-  }
-    
+  var staffSpreadsheet = SpreadsheetApp.getActive();  
   var sheet = staffSpreadsheet.getSheetByName(STAFF_DATA_SHEET_NAME_);
   var lastRow = sheet.getLastRow();
   

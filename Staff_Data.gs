@@ -38,16 +38,21 @@ var EVENT_HANDLERS_ = {
 //                           Name                            onError Message                          Main Functionality
 //                           ----                            ---------------                          ------------------
 
+  onInstall:                 ['onInstall()',                 'Failed to install',                     onInstall_],
   initialize:                ['initialize()',                'Failed to initialize',                  initialize_],
   staffFolders:              ['staffFolders()',              'Failed to sort staff folders',          staffFolders_],
   maintainPromotionCalendar: ['maintainPromotionCalendar()', 'Failed to maintain promotion calendar', maintainPromotionCalendar_],
   onEdit:                    ['onEdit()',                    'Failed to process edit',                onEdit_],
 }
 
+function onInstall(arg1)                 {return eventHandler_(EVENT_HANDLERS_.onInstall,                 arg1)}
 function initialize(arg1)                {return eventHandler_(EVENT_HANDLERS_.initialize,                arg1)}
 function staffFolders(arg1)              {return eventHandler_(EVENT_HANDLERS_.staffFolders,              arg1)}
 function maintainPromotionCalendar(arg1) {return eventHandler_(EVENT_HANDLERS_.maintainPromotionCalendar, arg1)}
 function onEdit(arg1)                    {return eventHandler_(EVENT_HANDLERS_.onEdit,                    arg1)} 
+
+// onOpen can be opened in various authModes so it needs to be outside eventHandler_() 
+function onOpen(arg1) {onOpen_(arg1)}
 
 // Private Functions
 // =================
@@ -72,16 +77,37 @@ function eventHandler_(config, arg1) {
 
   try {
 
-    var userEmail = Session.getActiveUser().getEmail()
+    var userEmail = 'unknown email'
+    var initializeLog = false
 
-    Log_ = BBLog.getLog({
-      level:                DEBUG_LOG_LEVEL_, 
-      displayFunctionNames: DEBUG_LOG_DISPLAY_FUNCTION_NAMES_,
-      sheetId:              Config.get('STAFF_DATA_SHEET_ID')
-    })
+    if (arg1 !== undefined && arg1.hasOwnProperty('authMode')) {
     
-    Log_.info('Handling ' + config[0] + ' from ' + (userEmail || 'unknown email') + ' (' + SCRIPT_NAME + ' ' + SCRIPT_VERSION + ')')
+      // arg1 is an event so need to check authMode
+        
+      if (arg1.authMode !== ScriptApp.AuthMode.NONE) { // LIMITED or FULL
+
+        userEmail = Session.getEffectiveUser().getEmail()
+        initializeLog = true
+      }
+      
+    } else {
+
+      // arg1 is not an event so assume we have sufficient auth to do the following
+
+      userEmail = Session.getEffectiveUser().getEmail()
+      initializeLog = true   
+    }
     
+    if (initializeLog) {
+    
+      Log_ = BBLog.getLog({
+        level:                DEBUG_LOG_LEVEL_, 
+        displayFunctionNames: DEBUG_LOG_DISPLAY_FUNCTION_NAMES_,
+      })
+      
+      Log_.info('Handling ' + config[0] + ' from ' + (userEmail || 'unknown email') + ' (' + SCRIPT_NAME + ' ' + SCRIPT_VERSION + ')')
+    }
+
     // Call the main function
     return config[2](arg1)
     
@@ -105,13 +131,55 @@ function eventHandler_(config, arg1) {
     }
 
     Assert.handleError(assertConfig) 
-
   }
   
 } // eventHandler_()
 
 // Private event handlers
 // ----------------------
+
+function onInstall_(event) {
+
+  Log_.functionEntryPoint()
+  
+  var properties = PropertiesService.getDocumentProperties()
+  var triggerId = properties.getProperty('triggerId')
+  
+  if (triggerId !== null) {
+    properties.deleteProperty('triggerId')
+    Log_.info('Cleared "onSDInstallableEdit" onEdit trigger id:' + triggerId)
+  }
+  
+  onOpen_(event)
+  
+} // onInstall_()
+
+function onOpen_(event) {
+
+  var menu = SpreadsheetApp.getUi().createAddonMenu()
+  
+  if (event.authMode === ScriptApp.AuthMode.NONE) {
+  
+    menu.addItem('Start', 'initialize')   
+
+  } else { // LIMITED or FULL
+  
+    var triggerId = PropertiesService.getDocumentProperties().getProperty('triggerId')
+  
+    if (triggerId !== null) {
+  
+      menu
+        .addItem("Update Staff Folders in Google Drive", "staffFolders")
+        .addItem("Update Event Sponsorship Pages for Teams", "maintainPromotionCalendar")   
+  
+    } else {
+  
+      menu.addItem('Start', 'initialize')   
+    }
+  }
+          
+  menu.addToUi();
+}
 
 /*
 
@@ -244,22 +312,34 @@ function onEdit_(event) {
 
 /**
  * Initialize the library
+ *
+ * @param {object} event
  */
  
-function initialize_() {
+function initialize_(event) {
 
   Log_.functionEntryPoint()
   
-  var staffDataSpreadsheetId = Config.get('STAFF_DATA_SHEET_ID')
+  var staffDataSpreadsheetId = SpreadsheetApp.getActive().getId()  
   
-  Log_.fine('staffDataSpreadsheetId: ' + staffDataSpreadsheetId)
-  
-  ScriptApp
-    .newTrigger('onInstallableEdit')
+  var triggerId = ScriptApp
+    .newTrigger('onSDInstallableEdit')
     .forSpreadsheet(staffDataSpreadsheetId)
     .onEdit()
-    .create();
+    .create()
+    .getUniqueId()
 
-  Log_.info('Created "onInstallableEdit" onEdit trigger')
+  var properties = PropertiesService.getDocumentProperties()
+  
+  if (properties.getProperty('triggerId') !== null) {
+    throw new Error('There is already a trigger ID stored')
+  }
 
-} // initialize_() 
+  properties.setProperty('triggerId', triggerId)
+  
+  // Refresh the menu (initialize is only ever called from menu, when authMode is FULL)
+  onOpen_({authMode: ScriptApp.AuthMode.FULL})
+
+  Log_.info('Created "onSDInstallableEdit" onEdit trigger: ' + triggerId)
+
+} // initialize_()

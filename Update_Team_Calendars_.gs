@@ -4,7 +4,7 @@
 
 function maintainPromotionCalendar_() {
 
-  var staffDataSheetId = Config.get('STAFF_DATA_SHEET_ID');
+  var staffDataSheetId = SpreadsheetApp.getActive().getId();
   var staffDataSpreadsheet = SpreadsheetApp.openById(staffDataSheetId);
   
   var staffDataSheet = staffDataSpreadsheet.getSheetByName(STAFF_DATA_SHEET_NAME_);
