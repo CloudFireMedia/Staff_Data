@@ -20,9 +20,9 @@
 // =============
 
 var SCRIPT_NAME = 'Staff_Data';
-var SCRIPT_VERSION = 'v1.4.dev_ajr';
+var SCRIPT_VERSION = 'v1.5';
 
-var PRODUCTION_VERSION_ = false;
+var PRODUCTION_VERSION_ = true;
 
 // Log Library
 // -----------
