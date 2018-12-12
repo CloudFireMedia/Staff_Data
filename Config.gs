@@ -20,7 +20,7 @@
 // =============
 
 var SCRIPT_NAME = 'Staff_Data';
-var SCRIPT_VERSION = 'v1.5';
+var SCRIPT_VERSION = 'v1.6';
 
 var PRODUCTION_VERSION_ = true;
 
