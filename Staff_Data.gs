@@ -1,12 +1,10 @@
-// JSHint - TODO
+// JSHint - 6th Nov 2019 12.17 GMT
 /* jshint asi: true */
 
 (function() {"use strict"})()
 
 // Staff_Data.gs
 // =============
-//
-// Dev: AndrewRoberts.net
 //
 // External interface to this script - all of the event handlers.
 //
@@ -43,15 +41,17 @@ var EVENT_HANDLERS_ = {
   staffFolders:              ['staffFolders()',              'Failed to sort staff folders',          staffFolders_],
   maintainPromotionCalendar: ['maintainPromotionCalendar()', 'Failed to maintain promotion calendar', maintainPromotionCalendar_],
   onEdit:                    ['onEdit()',                    'Failed to process edit',                onEdit_],
+  onChange:                  ['onChange()',                  'Failed to process change',              onChange_],
 }
 
 function onInstall(arg1)                 {return eventHandler_(EVENT_HANDLERS_.onInstall,                 arg1)}
 function initialize(arg1)                {return eventHandler_(EVENT_HANDLERS_.initialize,                arg1)}
 function staffFolders(arg1)              {return eventHandler_(EVENT_HANDLERS_.staffFolders,              arg1)}
 function maintainPromotionCalendar(arg1) {return eventHandler_(EVENT_HANDLERS_.maintainPromotionCalendar, arg1)}
-function onEdit(arg1)                    {return eventHandler_(EVENT_HANDLERS_.onEdit,                    arg1)} 
+function onEdit(arg1)                    {return eventHandler_(EVENT_HANDLERS_.onEdit,                    arg1)}
+function onChange(arg1)                  {return eventHandler_(EVENT_HANDLERS_.onChange,                  arg1)}
 
-// onOpen can be opened in various authModes so it needs to be outside eventHandler_() 
+// These can be opened in various authModes so it needs to be outside eventHandler_() 
 function onOpen(arg1) {onOpen_(arg1)}
 
 // Private Functions
@@ -74,16 +74,15 @@ function onOpen(arg1) {onOpen_(arg1)}
  */
 
 function eventHandler_(config, arg1) {
-
+  
   try {
 
     var userEmail = 'unknown email'
     var initializeLog = false
 
-    if (arg1 !== undefined && arg1.hasOwnProperty('authMode')) {
+    if (arg1 !== undefined && arg1 instanceof Object && arg1.hasOwnProperty('authMode')) {
     
       // arg1 is an event so need to check authMode
-        
       if (arg1.authMode !== ScriptApp.AuthMode.NONE) { // LIMITED or FULL
 
         userEmail = Session.getEffectiveUser().getEmail()
@@ -93,7 +92,6 @@ function eventHandler_(config, arg1) {
     } else {
 
       // arg1 is not an event so assume we have sufficient auth to do the following
-
       userEmail = Session.getEffectiveUser().getEmail()
       initializeLog = true   
     }
@@ -143,11 +141,17 @@ function onInstall_(event) {
   Log_.functionEntryPoint()
   
   var properties = PropertiesService.getDocumentProperties()
-  var triggerId = properties.getProperty('triggerId')
+  var triggerEditId = properties.getProperty('triggerEditId')
+  var triggerChangeId = properties.getProperty('triggerChangeId')
   
-  if (triggerId !== null) {
-    properties.deleteProperty('triggerId')
-    Log_.info('Cleared "onSDInstallableEdit" onEdit trigger id:' + triggerId)
+  if (triggerEditId !== null) {
+    properties.deleteProperty('triggerEditId')
+    Log_.info('Cleared "onSDInstallableEdit" onEdit trigger id:' + triggerEditId)
+  }
+  
+  if (triggerChangeId !== null) {
+    properties.deleteProperty('triggerChangeId')
+    Log_.info('Cleared "onSDInstallableChange" onChange trigger id:' + triggerChangeId)
   }
   
   onOpen_(event)
@@ -156,7 +160,7 @@ function onInstall_(event) {
 
 function onOpen_(event) {
 
-  var menu = SpreadsheetApp.getUi().createAddonMenu()
+  var menu = SpreadsheetApp.getUi().createMenu('CloudFire')
   
   if (event.authMode === ScriptApp.AuthMode.NONE) {
   
@@ -164,13 +168,23 @@ function onOpen_(event) {
 
   } else { // LIMITED or FULL
   
+    var triggerEditId = PropertiesService.getDocumentProperties().getProperty('triggerEditId')
+    var triggerChangeId = PropertiesService.getDocumentProperties().getProperty('triggerChangeId')
     var triggerId = PropertiesService.getDocumentProperties().getProperty('triggerId')
+    
+    if (triggerEditId !== null && triggerChangeId !== null) {
+      
+      // Check if a previous version of the onEdit has been installed by checking if a triggerId exists
+      // If triggerId exists run the initialize again
+      if (triggerId !== null) {
+              
+        menu.addItem('Start', 'initialize')
+      } else {
   
-    if (triggerId !== null) {
-  
-      menu
-        .addItem("Update Staff Folders in Google Drive", "staffFolders")
-        .addItem("Update Event Sponsorship Pages for Teams", "maintainPromotionCalendar")   
+        menu
+          .addItem("Update Staff Folders in Google Drive", "staffFolders")
+          .addItem("Update Event Sponsorship Pages for Teams", "maintainPromotionCalendar")   
+      }
   
     } else {
   
@@ -178,53 +192,89 @@ function onOpen_(event) {
     }
   }
           
-  menu.addToUi();
+  menu.addToUi()
 }
 
 /*
 
 // onChange
 {authMode=FULL, changeType=REMOVE_ROW, source=Spreadsheet, user=andrewr1969@gmail.com, triggerUid=822831230}
+*/
 
+function onChange_(event) {
+  
+  Log_.functionEntryPoint()
+  
+  var sp
+  
+  Log_.fine('triggerUid ' + event.triggerUid)
+  Log_.fine('Change Type: ' + event.changeType)
+
+  // The "event" object does not seem to be derived from Object, so 
+  // hasOwnProperty() can't be used
+  if (event.triggerUid === undefined) {
+    
+    // Ignore the simple edit trigger, as the installable is the only one that has auth    
+    Log_.fine('No triggerUid')
+    return
+  }
+  
+  if (event.changeType === undefined) {
+    
+    // The change type is undefined
+    Log_.fine('Change Type: undefined')
+    return
+  }
+    
+  sp = SpreadsheetApp.getActive()
+  recreateQuickLook_(sp)      
+  
+  return
+}
+
+
+/*
 // onEdit
 {authMode=FULL, range=Range, oldValue=1.0, source=Spreadsheet, value=2, user=andrewr1969@gmail.com, triggerUid=1616728844}
 
 */
 
 function onEdit_(event) {
+  
+  Log_.functionEntryPoint()
+  
+  var runRecreateQuickLookEdit = false
+  var sp
 
-  Log_.functionEntryPoint();
-  Log_.fine('event: %s', event);
-  var runRecreateQuickLook = false;
-  var sp;
+  Log_.fine('triggerUid ' + event.triggerUid)
+  
+  // The "event" object does not seem to be derived from Object, so 
+  // hasOwnProperty() can't be used 
+  if (event.triggerUid === undefined) {
     
-  if (!event.hasOwnProperty('triggerUid')) {
-    
-    // Ignore the simple edit trigger, as the installable is the only one that has auth 
-    return;
+    // Ignore the simple edit trigger, as the installable is the only one that has auth     
+    Log_.fine('No triggerUid')
+    return
   }
   
-  if (!event.hasOwnProperty('range')) {
+  if (event.range === undefined) {
     
-    // We've not been told where the change is so do it anyway
-    runRecreateQuickLook = true;
-    
-    Log_.warning('No range property');
-    return
+    // We've not been told where the change is so do it anyway   
+    runRecreateQuickLookEdit = true    
     
   } else {
     
-    var range = event.range;
-    var sh = range.getSheet();
-    var shName = sh.getName();
+    var range = event.range
+    var sh = range.getSheet()
+    var shName = sh.getName()
     
     if (shName !== STAFF_DATA_SHEET_NAME_) {
       return
     }
     
-    sp = sh.getParent();
-    var strValue = event.value;
-    var oldStrValue = event.oldValue;
+    sp = sh.getParent()
+    var strValue = event.value
+    var oldStrValue = event.oldValue
     
     Log_.fine('strValue: ' + strValue)
     Log_.fine('oldStrValue: ' + oldStrValue)
@@ -233,82 +283,92 @@ function onEdit_(event) {
     if (strValue !== oldStrValue) {
       
       if (range.getColumn() === STATUS_COLUMN_NUMBER_ && strValue === 'No longer employed') {        
-        sh.hideRows(range.getRow(), 1);
+        sh.hideRows(range.getRow(), 1)
       }  
       
-      runRecreateQuickLook = true;
+      runRecreateQuickLookEdit = true
     }
   }
   
-  if (runRecreateQuickLook) {
-    recreateQuickLook();      
+  if (runRecreateQuickLookEdit) {
+    
+    recreateQuickLook_(sp)      
   }
   
-  return;
-  
-  // Private Functions
-  // -----------------
-    
-  function recreateQuickLook() {
-  
-    var sh = sp.getSheetByName(STAFF_DATA_SHEET_NAME_);
-    var shDst = sp.getSheetByName(QUICK_LOOK_SHEET_NAME_);
-    var shTmpl = sp.getSheetByName(QUICK_LOOK_TEMPLATE_SHEET_NAME_);
-    var data = sh.getDataRange().getValues();
-    
-    var arrDest = []
-    var counter = 1;
-    
-    for (var i = 2; i < data.length; i++) {
-    
-      var firstName  = data[i][0];
-      var lastName   = data[i][1];
-      var jobTitle   = data[i][4]
-      var status     = data[i][5];
-      var ucStatus   = '' + status.trim().toUpperCase() // cast as string    
-      var extension  = data[i][6];
-      var cell       = data[i][7];
-      var secondCell = data[i][9];
-      
-      if (firstName != "" && 
-          (ucStatus == "FULL-TIME" || ucStatus == "PART-TIME" || ucStatus == "VOLUNTEER")) {
-          
-        var row = [counter, extension, lastName + ', ' + firstName, jobTitle, cell, secondCell, status];
-        arrDest.push(row);
-        counter++;     
-      }    
-    }
-    
-    shDst.clear();
-    var lr = shDst.getMaxRows();
-    
-    if (lr > 1) {
-      shDst.deleteRows(2, lr - 1);
-    }
-    
-    var lastTemplateRow = shTmpl.getLastRow()
-    
-    var rng = shTmpl.getRange(1, 1, lastTemplateRow, 9);
-    rng.copyTo(shDst.getRange("A1"));
-    var dates = shDst.getRange("A17").getValue();
-    var timeZone = Session.getScriptTimeZone()
-    dates = ('' + dates).replace('{date_updated_in_MM_/_DD_/_YY}', Utilities.formatDate(new Date(), timeZone, "MM/dd/yy"))
-    shDst.getRange("A17").setValue(dates)
-  
-    if (arrDest.length !== 0) {
-  
-      if (arrDest.length > 1) {
-        shDst.insertRows(4, (arrDest.length - 1));
-      }
-    
-      shDst.getRange(4, 2, arrDest.length, arrDest[0].length).setValues(arrDest);
-    }
-    
-    Log_.info('Updated "Quick Look" tab')
-    
-  } // onEdit_.recreateQuickLook()  
+  return
   
 } // onEdit_()
+
+// Private Functions
+// -----------------
+    
+function recreateQuickLook_(sp) {
+  
+  var sh = sp.getSheetByName(STAFF_DATA_SHEET_NAME_)
+  var shDst = sp.getSheetByName(QUICK_LOOK_SHEET_NAME_)
+  var shTmpl = sp.getSheetByName(QUICK_LOOK_TEMPLATE_SHEET_NAME_)
+  var data = sh.getDataRange().getValues()
+    
+  // Get a script lock, because we're about to modify a shared resource.
+  var lock = LockService.getDocumentLock()
+  
+  // Wait for up to 10 milliseconds for other processes to finish.  
+  if (!lock.tryLock(10)) {
+    Log_.fine('Could not obtain lock.')
+    return
+  }
+  
+  var arrDest = []
+  var counter = 1
+    
+  for (var i = 2; i < data.length; i++) {
+    
+    var firstName  = data[i][0]
+    var lastName   = data[i][1]
+    var jobTitle   = data[i][4]
+    var status     = data[i][5]
+    var ucStatus   = '' + status.trim().toUpperCase() // cast as string    
+    var extension  = data[i][6]
+    var cell       = data[i][7]
+    var secondCell = data[i][9]
+     
+    if (firstName != "" && 
+        (ucStatus == "FULL-TIME" || ucStatus == "PART-TIME" || ucStatus == "VOLUNTEER")) {
+         
+      var row = [counter, extension, lastName + ', ' + firstName, jobTitle, cell, secondCell, status]
+      arrDest.push(row)
+      counter++     
+    }    
+  }
+    
+  shDst.clear()
+  var lr = shDst.getMaxRows()
+    
+  if (lr > 1) {
+    shDst.deleteRows(2, lr - 1)
+  }
+  
+  var lastTemplateRow = shTmpl.getLastRow()
+    
+  var rng = shTmpl.getRange(1, 1, lastTemplateRow, 9)
+  rng.copyTo(shDst.getRange("A1"))
+  var dates = shDst.getRange("A17").getValue()
+  var timeZone = Session.getScriptTimeZone()
+  dates = ('' + dates).replace('{date_updated_in_MM_/_DD_/_YY}', Utilities.formatDate(new Date(), timeZone, "MM/dd/yy"))
+  shDst.getRange("A17").setValue(dates)
+  
+  if (arrDest.length !== 0) {
+  
+    if (arrDest.length > 1) {
+      shDst.insertRows(4, (arrDest.length - 1))
+    }
+    
+    shDst.getRange(4, 2, arrDest.length, arrDest[0].length).setValues(arrDest)
+  }
+  
+  lock.releaseLock()
+   
+} // recreateQuickLook_()  
 
 /**
  * Initialize the library
@@ -320,26 +380,56 @@ function initialize_(event) {
 
   Log_.functionEntryPoint()
   
-  var staffDataSpreadsheetId = SpreadsheetApp.getActive().getId()  
+  var staffDataSpreadsheetId = SpreadsheetApp.getActive().getId()
   
-  var triggerId = ScriptApp
+  // Delete all project triggers
+  ScriptApp.getProjectTriggers().forEach(function(trigger){
+
+    var triggerId = trigger.getUniqueId()
+    
+    ScriptApp.deleteTrigger(trigger)
+    Log_.info('Deleted trigger: ' + triggerId)
+  })
+   
+  var properties = PropertiesService.getDocumentProperties()
+  
+  //Delete the trigger ID properties also
+  properties.deleteProperty('triggerEditId')
+  properties.deleteProperty('triggerChangeId')
+  properties.deleteProperty('triggerId')
+  
+  var triggerEditId = ScriptApp
     .newTrigger('onSDInstallableEdit')
     .forSpreadsheet(staffDataSpreadsheetId)
     .onEdit()
     .create()
     .getUniqueId()
-
-  var properties = PropertiesService.getDocumentProperties()
   
-  if (properties.getProperty('triggerId') !== null) {
-    throw new Error('There is already a trigger ID stored')
+  var triggerChangeId = ScriptApp
+    .newTrigger('onSDInstallableChange')
+    .forSpreadsheet(staffDataSpreadsheetId)
+    .onChange()
+    .create()
+    .getUniqueId()
+
+  if (properties.getProperty('triggerEditId') !== null) {
+    throw new Error('There is already a trigger Edit ID stored')
+  }
+  
+  if (properties.getProperty('triggerChangeId') !== null) {
+    throw new Error('There is already a trigger Change ID stored')
   }
 
-  properties.setProperty('triggerId', triggerId)
+  properties.setProperty('triggerEditId', triggerEditId)
+  properties.setProperty('triggerChangeId', triggerChangeId)
   
   // Refresh the menu (initialize is only ever called from menu, when authMode is FULL)
   onOpen_({authMode: ScriptApp.AuthMode.FULL})
 
-  Log_.info('Created "onSDInstallableEdit" onEdit trigger: ' + triggerId)
+  Log_.info('Created "onSDInstallableEdit" onEdit trigger: ' + triggerEditId)
+  Log_.info('Created "onSDInstallableChange" onChange trigger: ' + triggerChangeId)
+  
+  // Create the Quick Look after initialization
+  recreateQuickLook_(SpreadsheetApp.getActive())   
 
 } // initialize_()
