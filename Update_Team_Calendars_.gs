@@ -208,39 +208,22 @@ function maintainPromotionCalendar_() {
     
   } // maintainPromotionCalendar_.employed()
 
-  function getSheets() {
+  /**
+   * Get all the sheets and exclude any on the STAFF_DATA_IGNORE_LIST
+   */
+
+  function getSheets() {  
   
-    var allSheets = promotionsSpreadsheet.getSheets()
-    var sheets = []
-  
-    allSheets.forEach(function(sheet) {
-    
-      if (ignore(sheet)) {
-        return
-      }
-    
-      sheets.push(sheet)
-      
-      return
-      
-      // Private Functions
-      // -----------------
-      
-      function ignore(sheet) {
-      
-        var ignoreSheet = false
-    
-        SPECIAL_CALENDAR_SHEET_NAMES.forEach(function(specialSheetName) {
-        
-          if (sheet.getName() === specialSheetName) {
-            ignoreSheet = true
-          }
-        })
-        
-        return ignoreSheet
-      }
+    var ignoreSheets = Config.get('STAFF_DATA_IGNORE_LIST').split(',')  
+   
+    var sheets = promotionsSpreadsheet.getSheets().filter(function(sheet) {
+      return !ignoreSheets.some(function(sheetName) {        
+        if (sheet.getName().trim() === sheetName.trim()) {
+          return true
+        }
+      })       
     })
-    
+
     return sheets
     
   } // maintainPromotionCalendar_.getSheets()

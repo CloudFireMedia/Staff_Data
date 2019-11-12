@@ -20,7 +20,7 @@
 // =============
 
 var SCRIPT_NAME = 'Staff_Data'
-var SCRIPT_VERSION = 'v1.8'
+var SCRIPT_VERSION = 'v1.8.dev_ajr'
 
 var PRODUCTION_VERSION_ = true
 
@@ -40,7 +40,7 @@ var ADMIN_EMAIL_ADDRESS_ = 'dev@andrewroberts.net'
 // Test
 // ----
 
-var TEST_STAFF_DATA_SHEET_ID_ = '1OYjkbXdiNIbGs1PcbENHMgSKHCRqEit3xzEh0LNltYk'  
+var TEST_STAFF_DATA_SHEET_ID_ = '1oaf0fHVuvOhHb1MsZbuhwN_AQfhYFG2UHa05-Rz1n7A'  
 
 var TEST_DELETE_ES_TAB = true
 var TEST_SEND_EMAILS = true
