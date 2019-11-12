@@ -20,7 +20,7 @@
 // =============
 
 var SCRIPT_NAME = 'Staff_Data'
-var SCRIPT_VERSION = 'v1.8.dev_ajr'
+var SCRIPT_VERSION = 'v1.9'
 
 var PRODUCTION_VERSION_ = true
 
@@ -61,16 +61,6 @@ var QUICK_LOOK_TEMPLATE_SHEET_NAME_ = 'Template'
 var STATUS_COLUMN_NUMBER_ = 6
 
 var ES_TEMPLATE_SHEET_NAME_='TEMPLATE'
-
-var SPECIAL_CALENDAR_SHEET_NAMES = [
-  'Communications Director Master',
-  'Holidays + Blackout Dates',
-  'All Teams',
-  'Calendar Planning Team',
-  'Log',
-  'SAFE_ES_TAB',
-  'Calendars Blackout Dates'
-]
 
 var NOTIFICATION_SUBJECT = 'Action required! Event Sponsorship calendar for "%s" has been deleted'
 
