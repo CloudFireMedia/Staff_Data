@@ -1,15 +1,15 @@
 // 34567890123456789012345678901234567890123456789012345678901234567890123456789
 
-// JSHint - TODO
+// JSHint - 6th Nov 2019 12.17 GMT
 /* jshint asi: true */
 
 (function() {"use strict"})()
 
 // Code review all files - TODO
-// JSHint review (see files) - TODO
+// JSHint review (see files) - Done
 // Unit Tests - TODO
-// System Test (Dev) - TODO
-// System Test (Prod) - TODO
+// System Test (Dev) - Done
+// System Test (Prod) - Done
 
 // Config.gs
 // =========
@@ -19,51 +19,48 @@
 // Configuration
 // =============
 
-var SCRIPT_NAME = 'Staff_Data';
-var SCRIPT_VERSION = 'v1.6';
+var SCRIPT_NAME = 'Staff_Data'
+var SCRIPT_VERSION = 'v1.8'
 
-var PRODUCTION_VERSION_ = true;
+var PRODUCTION_VERSION_ = true
 
 // Log Library
 // -----------
 
-var DEBUG_LOG_LEVEL_ = PRODUCTION_VERSION_ ? BBLog.Level.INFO : BBLog.Level.ALL;
-var DEBUG_LOG_DISPLAY_FUNCTION_NAMES_ = PRODUCTION_VERSION_ ? BBLog.DisplayFunctionNames.NO : BBLog.DisplayFunctionNames.YES;
+var DEBUG_LOG_LEVEL_ = PRODUCTION_VERSION_ ? BBLog.Level.INFO : BBLog.Level.ALL
+var DEBUG_LOG_DISPLAY_FUNCTION_NAMES_ = PRODUCTION_VERSION_ ? BBLog.DisplayFunctionNames.NO : BBLog.DisplayFunctionNames.YES
 
 // Assert library
 // --------------
 
-var SEND_ERROR_EMAIL_ = PRODUCTION_VERSION_ ? true : false;
-var HANDLE_ERROR_ = Assert.HandleError.THROW;
-var ADMIN_EMAIL_ADDRESS_ = 'dev@cloudfire.media';
+var SEND_ERROR_EMAIL_ = PRODUCTION_VERSION_ ? true : false
+var HANDLE_ERROR_ = Assert.HandleError.THROW
+var ADMIN_EMAIL_ADDRESS_ = 'dev@andrewroberts.net'
 
 // Test
 // ----
 
-var TEST_STAFF_DATA_SHEET_ID_ = '1IuI-aiiCvzkpMrb_LpNWtilAG_iKePIYlW12ntQe0ng'
+var TEST_STAFF_DATA_SHEET_ID_ = '1OYjkbXdiNIbGs1PcbENHMgSKHCRqEit3xzEh0LNltYk'  
 
-var TEST_DELETE_ES_TAB = true;
-var TEST_SEND_EMAILS = true;
+var TEST_DELETE_ES_TAB = true
+var TEST_SEND_EMAILS = true
 
 if (PRODUCTION_VERSION_) {
   if (!TEST_DELETE_ES_TAB || !TEST_SEND_EMAILS) {
-    throw new Error('Test flags set in production mode');
+    throw new Error('Test flags set in production mode')
   }
 }
 
 // Constants/Enums
 // ===============
 
-// The archive folder has a space at the beginning
-var ARCHIVE_FOLDER_NAME_ = ' Archive';
+var STAFF_DATA_SHEET_NAME_          = 'Staff'
+var QUICK_LOOK_SHEET_NAME_          = 'Quick Look'
+var QUICK_LOOK_TEMPLATE_SHEET_NAME_ = 'Template'
 
-var STAFF_DATA_SHEET_NAME_          = 'Staff';
-var QUICK_LOOK_SHEET_NAME_          = 'Quick Look';
-var QUICK_LOOK_TEMPLATE_SHEET_NAME_ = 'Template';
+var STATUS_COLUMN_NUMBER_ = 6
 
-var STATUS_COLUMN_NUMBER_ = 6;
-
-var ES_TEMPLATE_SHEET_NAME_='TEMPLATE';
+var ES_TEMPLATE_SHEET_NAME_='TEMPLATE'
 
 var SPECIAL_CALENDAR_SHEET_NAMES = [
   'Communications Director Master',
@@ -73,9 +70,9 @@ var SPECIAL_CALENDAR_SHEET_NAMES = [
   'Log',
   'SAFE_ES_TAB',
   'Calendars Blackout Dates'
-];
+]
 
-var NOTIFICATION_SUBJECT = 'Action required! Event Sponsorship calendar for "%s" has been deleted';
+var NOTIFICATION_SUBJECT = 'Action required! Event Sponsorship calendar for "%s" has been deleted'
 
 // Function Template
 // -----------------
