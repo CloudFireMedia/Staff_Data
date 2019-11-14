@@ -54,9 +54,9 @@ if (PRODUCTION_VERSION_) {
 // Constants/Enums
 // ===============
 
-var STAFF_DATA_SHEET_NAME_          = 'Staff'
-var QUICK_LOOK_SHEET_NAME_          = 'Quick Look'
-var QUICK_LOOK_TEMPLATE_SHEET_NAME_ = 'Template'
+var STAFF_DATA_SHEET_NAME_          = 'Staff Directory'
+var QUICK_LOOK_SHEET_NAME_          = 'Staff Directory - Quick Look'
+var QUICK_LOOK_TEMPLATE_SHEET_NAME_ = '[ TEMPLATE ] Staff Directory - Quick Look'
 
 var STATUS_COLUMN_NUMBER_ = 6
 
